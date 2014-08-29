@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+_branchmeta() {
+  local_branches=$(git branch)
+  if [ -n local_branches ]; then
+    echo "No branches!"
+    exit 0
+  fi
+
+  #git config -f .gitbranch --get branch.note1.description
+
+}
+
+_branchmeta $@

@@ -1,0 +1,17 @@
+[branch "note1"]
+  description = "This is a branch note"
+  tags = "tag1,tag2,tag3"
+
+[branch "note2"]
+  description = "Another branch note"
+  tags = "tag1,tag3"
+
+[branch "nodesc"]
+  tags = "tag4"
+
+[branch "notags"]
+  desc = "no tags on this branch"
+
+[branch "nonexistent"]
+  desc = "this branch doesn't exist"
+  tags = "tag3"
