@@ -1,5 +1,5 @@
 [branch "note1"]
-  description = "This is a branch note"
+	description = 1-newline-1\\r\\n\\nThis is the updated note for note 1 updateeeeee\\n\\nThis is the updated note for note 1
   tags = "tag1,tag2,tag3"
 
 [branch "note2"]
@@ -15,3 +15,7 @@
 [branch "nonexistent"]
   desc = "this branch doesn't exist"
   tags = "tag3"
+[branch "master"]
+	description = aabc this is a test
+[branch ""]
+	description = test --

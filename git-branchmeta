@@ -1,14 +1,185 @@
 #!/usr/bin/env bash
+# git-branchmeta
 
-_branchmeta() {
-  local_branches=$(git branch)
-  if [ -n local_branches ]; then
-    echo "No branches!"
-    exit 0
-  fi
+semver="0.0.1"
+scriptname="$(basename "$0")"
 
-  #git config -f .gitbranch --get branch.note1.description
+#yellow=$(tput setaf 3)
+#orange=$(tput setaf 9)
+red=$(tput setaf 1)
+magenta=$(tput setaf 5)
+#violet=$(tput setaf 13)
+#cyan=$(tput setaf 6)
+green=$(tput setaf 2)
+blue=$(tput setaf 4)
+normal=$(tput sgr0)
 
+sync_meta() {
+  #@TODO
+  # read from .git/config
+  # get meta values for each branch
+  # clear from .git/config
+  # write to .gitbranch
+  exit
 }
 
-_branchmeta $@
+has_branchmeta() {
+  [[ -f ".gitbranch" ]]
+}
+
+replace_description() {
+  git config -f "$metafile" "branch.${target_branchname}.description" "$@"
+  exit $?
+}
+
+set_description() {
+  old_description="$(get_description)"
+  new_description="${*}\r\n\n${old_description}"
+  git config -f "$metafile" "branch.${target_branchname}.description" "$new_description"
+  exit $?
+}
+
+get_description() {
+  git config -f "$metafile" --get "branch.${target_branchname}.description"
+  exit $?
+}
+
+branchmeta() {
+  git for-each-ref --format="%(refname:short) %(committerdate:short)" refs/heads | \
+    while read branchname branchdate; do
+
+      if [ -n "$target_branchname" ] && [ "$target_branchname" != "$branchname" ]; then
+        continue
+      fi
+
+      description="$(git config -f "$metafile" --get "branch.${branchname}.description")"
+      tags="$(git config -f "$metafile" --get "branch.${branchname}.tags")"
+
+      branch_color=$blue
+      status_symbol=""
+      status_color=$normal
+      if [ "$branchname" == "$current_branchname" ]; then
+        branch_color=$magenta
+        current_commit="$(git rev-parse HEAD)"
+        branch_commit="$(git rev-parse "$branchname")"
+        if [ "$current_commit" == "$branch_commit" ]; then
+          status_symbol="✓"
+          status_color=$green
+        else
+          status_color=$red
+          status_symbol="✗"
+        fi
+      fi
+
+      #@TODO support --no-color
+      #@TODO support --format=config for standard gitconfig output
+      #@TODO support --one-line
+      printf "%s" "${branch_color}${branchname}${status_color}${status_symbol}${normal} -- last updated ${branchdate}${normal}"
+
+      if [ -n "$tags" ]; then
+        printf "%s\n" "${tags}"
+      else
+        echo
+      fi
+
+      echo
+      [ -n "$description" ] && printf "%4s- %s\n\n" " " "${description}"
+
+    done
+
+  exit $?
+}
+
+version() {
+  echo "$scriptname $semver"
+}
+
+help() {
+  version
+  echo
+  echo "target branch defaults to the current branch"
+  echo "-b BRANCH_NAME    -- set target branch"
+  echo "-d                -- display meta {for all/target branch}"
+  echo "-g                -- get description for target branch"
+  echo "-h                -- show help"
+  echo "-l                -- display meta for all"
+  echo "-v                -- version info"
+
+  echo "-s DESCRIPTION    -- set description for target branch"
+  echo "                     ANYTHING after -s will be considered part of the description"
+}
+
+require_target() {
+  [[ -z $target_branchname ]] && target_branchname="${current_branchname}"
+}
+
+main() {
+
+  opts=$( getopt -o b:dghlsv --long branch: -- "$@" )
+  eval set -- "$opts"
+
+  valid=true
+  while $valid; do
+    case "$1" in
+      -b|--branch)    if [ -n "$2" ]; then
+                        target_branchname="$2"
+                      fi
+                      shift 2
+                      ;;
+
+      -d|--display)   action="display"
+                      shift
+                      ;;
+
+      -l|--list)      target_branchname=""
+                      branchmeta
+                      exit 0
+                      ;;
+
+      -r|--replace)   require_target
+                      action="replace_description"
+                      break
+                      ;;
+      -s|--set)       require_target
+                      action="set_description"
+                      break
+                      ;;
+      -g|--get)       require_target
+                      action="get_description"
+                      shift
+                      ;;
+
+      -h|--help)      help
+                      exit 0
+                      ;;
+      -v)             version
+                      exit 0
+                      ;;
+
+      --)             require_target
+                      branchmeta
+                      exit $?
+                      ;;
+    esac
+  done
+
+  if [ "$action" == "display" ]; then
+    branchmeta
+  elif [ "$action" == "get_description" ]; then
+    get_description "$target_branchname"
+  elif [ "$action" == "set_description" ]; then
+    set_description "${*:3}"
+  elif [ "$action" == "replace_description" ]; then
+    replace_description "${*:3}"
+  fi
+
+  exit
+}
+
+metafile=".git/config"
+has_branchmeta && metafile=".gitbranch"
+
+current_branchname="$(git symbolic-ref --short HEAD)"
+action=""
+
+main "$@"
