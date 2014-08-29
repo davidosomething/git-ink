@@ -74,10 +74,10 @@ branchmeta() {
       #@TODO support --no-color
       #@TODO support --format=config for standard gitconfig output
       #@TODO support --one-line
-      printf "%s" "${branch_color}${branchname}${status_color}${status_symbol}${normal} -- last updated ${branchdate}${normal}"
+      printf "%s" "${branch_color}${branchname}${status_color}${status_symbol}${normal} - last updated ${branchdate}${normal}"
 
       if [ -n "$tags" ]; then
-        printf "%s\n" "${tags}"
+        printf " - %s \n" "${tags}"
       else
         echo
       fi
@@ -105,7 +105,10 @@ help() {
   echo "-l                -- display meta for all"
   echo "-v                -- version info"
 
+  echo "-r DESCRIPTION    -- replace description for branch"
+  echo "                     ANYTHING after -r will be considered part of the description"
   echo "-s DESCRIPTION    -- set description for target branch"
+  echo "                     PREPENDS to the previous description"
   echo "                     ANYTHING after -s will be considered part of the description"
 }
 
