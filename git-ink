@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# git-branchmeta
+# git-ink
 
 semver="0.0.1"
 scriptname="$(basename "$0")"
@@ -23,7 +23,7 @@ sync_meta() {
   exit
 }
 
-has_branchmeta() {
+has_ink() {
   [[ -f ".gitbranch" ]]
 }
 
@@ -44,7 +44,7 @@ get_description() {
   exit $?
 }
 
-branchmeta() {
+ink() {
   git for-each-ref --format="%(refname:short) %(committerdate:short)" refs/heads | \
     while read branchname branchdate; do
 
@@ -135,7 +135,7 @@ main() {
                       ;;
 
       -l|--list)      target_branchname=""
-                      branchmeta
+                      ink
                       exit 0
                       ;;
 
@@ -160,14 +160,14 @@ main() {
                       ;;
 
       --)             require_target
-                      branchmeta
+                      ink
                       exit $?
                       ;;
     esac
   done
 
   if [ "$action" == "display" ]; then
-    branchmeta
+    ink
   elif [ "$action" == "get_description" ]; then
     get_description "$target_branchname"
   elif [ "$action" == "set_description" ]; then
@@ -180,7 +180,7 @@ main() {
 }
 
 metafile=".git/config"
-has_branchmeta && metafile=".gitbranch"
+has_ink && metafile=".gitbranch"
 
 current_branchname="$(git symbolic-ref --short HEAD)"
 action=""

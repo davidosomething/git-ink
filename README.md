@@ -1,4 +1,4 @@
-# git-branchmeta
+# git-ink
 
 > Alpha
 > Pull out the `[branch]` description from your `.git/config`
@@ -8,13 +8,13 @@
 
 ## Install
 
-Put `git-branchmeta` somewhere in your path.
+Put `git-ink` somewhere in your path.
 
 ## Usage
 
-`git branchmeta -h`
+`git ink -h`
 
-A `.gitbranch` file will be used as the canonical source of branchmeta for this
+A `.gitbranch` file will be used as the canonical source of meta data for this
 plugin if one is provided. It is in the same format as gitconfig files.
 It should be added to `.gitignore` so it can exist in all branches (otherwise
 you would not have all the meta for all branches)
