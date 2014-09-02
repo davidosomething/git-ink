@@ -6,7 +6,7 @@
 > Hashtag branches for easier management
 > Same format as gitconfig so you can still use `git branch --edit-description` (TODO - compatibility with .gitbranch file)
 
-[![Screenshot of output](screenshot.png)]
+![Screenshot of output](screenshot.png)
 
 ## Support
 * OSX - Partial
