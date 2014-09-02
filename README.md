@@ -1,9 +1,13 @@
 # git-ink
 
-> Alpha
+> Alpha software
+
 > Pull out the `[branch]` description from your `.git/config`
+
 > Quickly edit and view your branches, with annotations
+
 > Hashtag branches for easier management
+
 > Same format as gitconfig so you can still use `git branch --edit-description` (TODO - compatibility with .gitbranch file)
 
 ![Screenshot of output](screenshot.png)
