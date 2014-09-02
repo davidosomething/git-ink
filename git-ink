@@ -23,24 +23,32 @@ sync_meta() {
   exit
 }
 
-has_ink() {
+gitconfig() {
+  if [[ -n $metafile ]]; then
+    git config -f "$metafile" "$@"
+  else
+    git config --local "$@"
+  fi
+}
+
+has_gitbranch() {
   [[ -f ".gitbranch" ]]
 }
 
 replace_description() {
-  git config -f "$metafile" "branch.${target_branchname}.description" "$@"
+    gitconfig "branch.${target_branchname}.description" "$@"
   exit $?
 }
 
 set_description() {
   old_description="$(get_description)"
   new_description="${*}\r\n\n${old_description}"
-  git config -f "$metafile" "branch.${target_branchname}.description" "$new_description"
+  gitconfig "branch.${target_branchname}.description" "$new_description"
   exit $?
 }
 
 get_description() {
-  git config -f "$metafile" --get "branch.${target_branchname}.description"
+  gitconfig --get "branch.${target_branchname}.description"
   exit $?
 }
 
@@ -52,8 +60,8 @@ ink() {
         continue
       fi
 
-      description="$(git config -f "$metafile" --get "branch.${branchname}.description")"
-      tags="$(git config -f "$metafile" --get "branch.${branchname}.tags")"
+      description="$(gitconfig --get "branch.${branchname}.description")"
+      tags="$(gitconfig --get "branch.${branchname}.tags")"
 
       branch_color=$blue
       status_symbol=""
@@ -74,12 +82,17 @@ ink() {
       #@TODO support --no-color
       #@TODO support --format=config for standard gitconfig output
       #@TODO support --one-line
-      printf "%s" "${branch_color}${branchname}${status_color}${status_symbol}${normal} - last updated ${branchdate}${normal}"
+      output_branchname="${branch_color}${branchname}${status_color}${status_symbol}"
+      output_padding=$(printf '%0.1s' "."{1..60})
+      output_padding_length=78
+      printf "%s ${normal}"    "${output_branchname}"
+      printf "%*.*s ${normal}" \
+        0 $((output_padding_length - ${#output_branchname} - ${#branchdate} )) \
+        "${output_padding}"
+      printf "%s\n${normal}"  "${branchdate}"
 
       if [ -n "$tags" ]; then
-        printf " - %s \n" "${tags}"
-      else
-        echo
+        printf " - %s" "${tags}"
       fi
 
       echo
@@ -159,8 +172,7 @@ main() {
                       exit 0
                       ;;
 
-      --)             require_target
-                      ink
+      --)             ink
                       exit $?
                       ;;
     esac
@@ -179,8 +191,8 @@ main() {
   exit
 }
 
-metafile=".git/config"
-has_ink && metafile=".gitbranch"
+metafile=""
+has_gitbranch && metafile=".gitbranch"
 
 current_branchname="$(git symbolic-ref --short HEAD)"
 action=""
