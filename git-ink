@@ -89,14 +89,14 @@ ink() {
       printf "%*.*s ${normal}" \
         0 $((output_padding_length - ${#output_branchname} - ${#branchdate} )) \
         "${output_padding}"
-      printf "%s\n${normal}"  "${branchdate}"
+      printf "%s${normal}"  "${branchdate}"
 
       if [ -n "$tags" ]; then
         printf " - %s" "${tags}"
       fi
 
       echo
-      [ -n "$description" ] && printf "%4s- %s\n\n" " " "${description}"
+      [ -n "$description" ] && printf "%s\n\n" "${description}"
 
     done
 
