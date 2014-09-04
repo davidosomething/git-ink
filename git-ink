@@ -96,7 +96,15 @@ ink() {
       fi
 
       echo
-      [ -n "$description" ] && printf "%s\n\n" "${description}"
+      original_IFS=${IFS}
+      newlines_IFS=$'\n'
+      IFS="${newlines_IFS}"
+      for line in ${description}; do
+        IFS="${original_IFS}"
+        printf "%2s %s\n" " " "${line}"
+        IFS="${newlines_IFS}"
+      done
+      IFS="${original_IFS}"
 
     done
 
