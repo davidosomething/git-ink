@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+
 # git-ink
 
-semver="0.0.1"
+semver="0.0.2"
 scriptname="$(basename "$0")"
 
 #yellow=$(tput setaf 3)
@@ -11,7 +12,6 @@ magenta=$(tput setaf 5)
 #violet=$(tput setaf 13)
 #cyan=$(tput setaf 6)
 green=$(tput setaf 2)
-blue=$(tput setaf 4)
 normal=$(tput sgr0)
 
 sync_meta() {
@@ -53,60 +53,65 @@ get_description() {
 }
 
 ink() {
-  git for-each-ref --format="%(refname:short) %(committerdate:short)" refs/heads | \
-    while read branchname branchdate; do
+  local branches
+  branches=$(git for-each-ref --format="%(refname:short) %(committerdate:short)" refs/heads)
 
-      if [ -n "$target_branchname" ] && [ "$target_branchname" != "$branchname" ]; then
-        continue
+  echo "$branches" | while read -r branchname branchdate; do
+    if [ -n "$target_branchname" ] && [ "$target_branchname" != "$branchname" ]; then
+      continue
+    fi
+
+    description="$(gitconfig --get "branch.${branchname}.description")"
+    tags="$(gitconfig --get "branch.${branchname}.tags")"
+
+    branch_color=$normal
+    status_color=$normal
+    status_symbol="•"
+    padding_symbol_length=0
+
+    if [ "$branchname" == "$current_branchname" ]; then
+      branch_color=$magenta
+      current_commit="$(git rev-parse HEAD)"
+      branch_commit="$(git rev-parse "$branchname")"
+
+      # fix utf-8 symbol length for padding
+      padding_symbol_length=2
+      if [ "$current_commit" == "$branch_commit" ]; then
+        status_symbol="✓"
+        status_color=$green
+      else
+        status_color=$red
+        status_symbol="✗"
       fi
+    fi
 
-      description="$(gitconfig --get "branch.${branchname}.description")"
-      tags="$(gitconfig --get "branch.${branchname}.tags")"
+    #@TODO support --no-color
+    #@TODO support --format=config for standard gitconfig output
+    #@TODO support --one-line
+    output_branchname="${status_color}${status_symbol} ${branch_color}${branchname}"
+    output_padding=$(printf '%0.1s' "."{1..60})
+    output_padding_length=$((78 - padding_symbol_length))
+    printf "%s ${normal}"    "${output_branchname}"
+    printf "%*.*s ${normal}" \
+      0 $((output_padding_length - ${#output_branchname} - ${#branchdate} )) \
+      "${output_padding}"
+    printf "%s${normal}"  "${branchdate}"
 
-      branch_color=$blue
-      status_symbol=""
-      status_color=$normal
-      if [ "$branchname" == "$current_branchname" ]; then
-        branch_color=$magenta
-        current_commit="$(git rev-parse HEAD)"
-        branch_commit="$(git rev-parse "$branchname")"
-        if [ "$current_commit" == "$branch_commit" ]; then
-          status_symbol="✓"
-          status_color=$green
-        else
-          status_color=$red
-          status_symbol="✗"
-        fi
-      fi
+    if [ -n "$tags" ]; then
+      printf " - %s" "${tags}"
+    fi
 
-      #@TODO support --no-color
-      #@TODO support --format=config for standard gitconfig output
-      #@TODO support --one-line
-      output_branchname="${branch_color}${branchname}${status_color}${status_symbol}"
-      output_padding=$(printf '%0.1s' "."{1..60})
-      output_padding_length=78
-      printf "%s ${normal}"    "${output_branchname}"
-      printf "%*.*s ${normal}" \
-        0 $((output_padding_length - ${#output_branchname} - ${#branchdate} )) \
-        "${output_padding}"
-      printf "%s${normal}"  "${branchdate}"
-
-      if [ -n "$tags" ]; then
-        printf " - %s" "${tags}"
-      fi
-
-      echo
-      original_IFS=${IFS}
-      newlines_IFS=$'\n'
-      IFS="${newlines_IFS}"
-      for line in ${description}; do
-        IFS="${original_IFS}"
-        printf "%2s %s\n" " " "${line}"
-        IFS="${newlines_IFS}"
-      done
+    echo
+    original_IFS=${IFS}
+    newlines_IFS=$'\n'
+    IFS="${newlines_IFS}"
+    for line in ${description}; do
       IFS="${original_IFS}"
-
+      printf "%2s %s\n" " " "${line}"
+      IFS="${newlines_IFS}"
     done
+    IFS="${original_IFS}"
+  done
 
   exit $?
 }
