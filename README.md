@@ -7,11 +7,11 @@ view your branches, with annotations; hashtag branches for easier management.
 
 ## Support
 
-* OSX - Partial
-    * the `git ink` command works but options do not (pending a getopts rewrite)
-        * Use `git branch --edit-description` to add descriptions in the interim
-* Linux - Full
-    * `git ink` and all its flags work.
+- OSX - Partial
+    - the `git ink` command works but options do not (pending a getopts rewrite)
+        - Use `git branch --edit-description` to add descriptions in the interim
+-* Linux - Full
+    - `git ink` and all its flags work.
 
 ## Install
 
@@ -30,9 +30,15 @@ you would not have all the meta for all branches)
 
 ## TODO
 
-* sync with the branch info and descriptions stored in `.git/config`.
-* find a good way to keep the .gitbranch file distributed across multiple repo,
+- sync with the branch info and descriptions stored in `.git/config`.
+- find a good way to keep the .gitbranch file distributed across multiple repo,
   but available to all branches
-* rewrite in Ruby or Python for better compatibility
-* tests
+- rewrite in Ruby or Python for better compatibility
+- tests
+
+## Changelog
+
+- 2015-10-22 - Updated screenshot
+
+- 2015-10-19 - Change output formatting, indent branch descriptions
 
