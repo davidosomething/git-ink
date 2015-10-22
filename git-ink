@@ -2,7 +2,7 @@
 
 # git-ink
 
-semver="0.0.2"
+semver="1.0.0"
 scriptname="$(basename "$0")"
 
 #yellow=$(tput setaf 3)
@@ -14,7 +14,20 @@ magenta=$(tput setaf 5)
 green=$(tput setaf 2)
 normal=$(tput sgr0)
 
-sync_meta() {
+
+_current_branchname() {
+  git symbolic-ref --short HEAD
+}
+
+
+_get_branches() {
+  git for-each-ref \
+    --format="%(refname:short) %(committerdate:short)" \
+    refs/heads
+}
+
+
+_sync_meta() {
   #@TODO
   # read from .git/config
   # get meta values for each branch
@@ -23,53 +36,78 @@ sync_meta() {
   exit
 }
 
-gitconfig() {
-  if [[ -n $metafile ]]; then
-    git config -f "$metafile" "$@"
+
+_gitconfig() {
+  local ink_metafile=""
+  _has_gitbranch && ink_metafile=".gitbranch"
+
+  if [ -n "$ink_metafile" ]; then
+    git config -f "$ink_metafile" "$@"
   else
     git config --local "$@"
   fi
 }
 
-has_gitbranch() {
-  [[ -f ".gitbranch" ]]
+
+_has_gitbranch() {
+  [ -f ".gitbranch" ]
 }
 
-replace_description() {
-    gitconfig "branch.${target_branchname}.description" "$@"
-  exit $?
+
+_replace_description() {
+  local new_description
+  new_description="$( printf "%b" "${2}\r\n" )"
+  _gitconfig "branch.${1}.description" "${new_description}"
 }
 
-set_description() {
-  old_description="$(get_description)"
-  new_description="${*}\r\n\n${old_description}"
-  gitconfig "branch.${target_branchname}.description" "$new_description"
-  exit $?
+
+# @param branchname
+# @param new description
+_set_description() {
+  local old_description
+  local new_description
+  old_description="$(_get_description "${1}")"
+  new_description="$( printf '%b' "${2}\r\n\n${old_description}" )"
+  _gitconfig "branch.${1}.description" "${new_description}"
 }
 
-get_description() {
-  gitconfig --get "branch.${target_branchname}.description"
-  exit $?
+
+# @param branchname to get unformatted description of
+_get_description() {
+  _gitconfig --get "branch.${1}.description"
 }
 
-ink() {
-  local branches
-  branches=$(git for-each-ref --format="%(refname:short) %(committerdate:short)" refs/heads)
 
-  echo "$branches" | while read -r branchname branchdate; do
+# output indented branch description
+# with literal newlines (otherwise will diplay all on one line)
+# @param branchname to show description of
+_output_branch_description() {
+  local original_IFS=${IFS}
+  local newlines_IFS=$'\n'
+  IFS="${newlines_IFS}"
+  for line in $(_get_description "${branchname}"); do
+    IFS="${original_IFS}"
+    printf "%4s%s\n" " " "${line}"
+    IFS="${newlines_IFS}"
+  done
+  IFS="${original_IFS}"
+}
+
+
+_ink() {
+  _get_branches | while read -r branchname branchdate; do
     if [ -n "$target_branchname" ] && [ "$target_branchname" != "$branchname" ]; then
       continue
     fi
 
-    description="$(gitconfig --get "branch.${branchname}.description")"
-    tags="$(gitconfig --get "branch.${branchname}.tags")"
+    tags="$(_gitconfig --get "branch.${branchname}.tags")"
 
     branch_color=$normal
     status_color=$normal
     status_symbol="•"
     padding_symbol_length=0
 
-    if [ "$branchname" == "$current_branchname" ]; then
+    if [ "$branchname" == "$(_current_branchname)" ]; then
       branch_color=$magenta
       current_commit="$(git rev-parse HEAD)"
       branch_commit="$(git rev-parse "$branchname")"
@@ -86,7 +124,7 @@ ink() {
     fi
 
     #@TODO support --no-color
-    #@TODO support --format=config for standard gitconfig output
+    #@TODO support --format=config for standard _gitconfig output
     #@TODO support --one-line
     output_branchname="${status_color}${status_symbol} ${branch_color}${branchname}"
     output_padding=$(printf '%0.1s' "."{1..60})
@@ -102,112 +140,90 @@ ink() {
     fi
 
     echo
-    original_IFS=${IFS}
-    newlines_IFS=$'\n'
-    IFS="${newlines_IFS}"
-    for line in ${description}; do
-      IFS="${original_IFS}"
-      printf "%2s %s\n" " " "${line}"
-      IFS="${newlines_IFS}"
-    done
-    IFS="${original_IFS}"
-  done
 
-  exit $?
+    _output_branch_description "${branchname}"
+
+  done
 }
 
-version() {
+
+_version() {
   echo "$scriptname $semver"
 }
 
-help() {
-  version
+
+_help() {
   echo
   echo "target branch defaults to the current branch"
   echo "-b BRANCH_NAME    -- set target branch"
-  echo "-d                -- display meta {for all/target branch}"
   echo "-g                -- get description for target branch"
-  echo "-h                -- show help"
-  echo "-l                -- display meta for all"
-  echo "-v                -- version info"
-
   echo "-r DESCRIPTION    -- replace description for branch"
   echo "                     ANYTHING after -r will be considered part of the description"
   echo "-s DESCRIPTION    -- set description for target branch"
   echo "                     PREPENDS to the previous description"
   echo "                     ANYTHING after -s will be considered part of the description"
+  echo "-h                -- show help"
+  echo "-v                -- version info"
 }
 
-require_target() {
-  [[ -z $target_branchname ]] && target_branchname="${current_branchname}"
-}
 
-main() {
+_main() {
+  local action
+  local target_branchname
+  local new_description
 
-  opts=$( getopt -o b:dghlsv --long branch: -- "$@" )
-  eval set -- "$opts"
+  while getopts ":b:r:s:vgh" opt; do
+    case "$opt" in
 
-  valid=true
-  while $valid; do
-    case "$1" in
-      -b|--branch)    if [ -n "$2" ]; then
-                        target_branchname="$2"
-                      fi
-                      shift 2
-                      ;;
+      b) # set target branchname
+        target_branchname="$OPTARG"
+        ;;
 
-      -d|--display)   action="display"
-                      shift
-                      ;;
+      g) # output branch description
+        action="get_description"
+        ;;
 
-      -l|--list)      target_branchname=""
-                      ink
-                      exit 0
-                      ;;
+      r) # replace branch description
+        action="replace_description"
+        new_description="$OPTARG"
+        ;;
 
-      -r|--replace)   require_target
-                      action="replace_description"
-                      break
-                      ;;
-      -s|--set)       require_target
-                      action="set_description"
-                      break
-                      ;;
-      -g|--get)       require_target
-                      action="get_description"
-                      shift
-                      ;;
+      s) # set branch description
+        action="set_description"
+        new_description="$OPTARG"
+        ;;
 
-      -h|--help)      help
-                      exit 0
-                      ;;
-      -v)             version
-                      exit 0
-                      ;;
+      h) _version; _help; exit ;;
 
-      --)             ink
-                      exit $?
-                      ;;
+      v) _version; exit ;;
+
+      :) # missing args on any flag
+        echo "ERROR: Option -$OPTARG requires an argument." >&2
+        _help
+        exit 1
+        ;;
+
     esac
   done
 
-  if [ "$action" == "display" ]; then
-    ink
-  elif [ "$action" == "get_description" ]; then
-    get_description "$target_branchname"
-  elif [ "$action" == "set_description" ]; then
-    set_description "${*:3}"
-  elif [ "$action" == "replace_description" ]; then
-    replace_description "${*:3}"
+  if [ -n "$action" ]; then
+    target_branchname=${target_branchname:-$(_current_branchname)}
   fi
 
-  exit
+  if [ "$action" == "get_description" ]; then
+    _get_description "$target_branchname"
+    exit $?
+  elif [ "$action" == "set_description" ]; then
+    _set_description "${target_branchname}" "${new_description}"
+    exit $?
+  elif [ "$action" == "replace_description" ]; then
+    _replace_description "${target_branchname}" "${new_description}"
+    exit $?
+  fi
+
+  # default action
+  _ink
 }
 
-metafile=""
-has_gitbranch && metafile=".gitbranch"
 
-current_branchname="$(git symbolic-ref --short HEAD)"
-action=""
-
-main "$@"
+_main "$@"

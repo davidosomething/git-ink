@@ -18,4 +18,16 @@
 [branch "master"]
 	description = aabc this is a test
 [branch ""]
-	description = test --
+	description = 
+[branch "b c"]
+	description = \\r\\n\\n
+[branch "-s a b c"]
+	description = \\r\\n\\n
+[branch "-s a"]
+	description = \\r\\n\\n
+[branch "testtt"]
+	description = 
+[branch "-r cd"]
+	description = 
+[branch "dev"]
+	description = abcdefgh\n\ncdefgh

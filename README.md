@@ -1,4 +1,4 @@
-# git-ink (alpha)
+# git-ink
 
 Pull out the `[branch]` description from your `.git/config`; quickly edit and
 view your branches, with annotations; hashtag branches for easier management.
@@ -20,12 +20,17 @@ Put `git-ink` somewhere in your path.
 ## Usage
 
 ```shell
-git ink -h
+git branch --edit-description     # opens EDITOR to edit a description
+git ink                           # pretty list of branches and descriptions
+git ink -h                        # help
+git ink -b dev -g                 # display description of "dev" branch
+git ink -b dev -s "prepend me to existing description"
+git ink -b dev -r "overwrite entire description with this"
 ```
 
 A `.gitbranch` file will be used as the canonical source of meta data for this
 plugin if one is provided. It is in the same format as gitconfig files.
-It should be added to `.gitignore` so it can exist in all branches (otherwise
+It MUST be added to `.gitignore` so it can exist in all branches (otherwise
 you would not have all the meta for all branches)
 
 ## TODO
@@ -38,7 +43,11 @@ you would not have all the meta for all branches)
 
 ## Changelog
 
-- 2015-10-22 - Updated screenshot
+- 2015-10-22
+    - Release v1.0.0
+    - Fix arg parsing, var scoping, every function accepts branch name now
+    - Updated screenshot
 
-- 2015-10-19 - Change output formatting, indent branch descriptions
+- 2015-10-19
+    - Change output formatting, indent branch descriptions
 
