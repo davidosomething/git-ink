@@ -43,6 +43,10 @@ you would not have all the meta for all branches)
 
 ## Changelog
 
+- 2015-10-26
+    - Release v1.0.1
+    - add header, _output_line function
+
 - 2015-10-22
     - Release v1.0.0
     - Fix arg parsing, var scoping, every function accepts branch name now

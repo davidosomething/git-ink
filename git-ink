@@ -2,7 +2,7 @@
 
 # git-ink
 
-semver="1.0.0"
+semver="1.0.1"
 scriptname="$(basename "$0")"
 
 yellow=$(tput setaf 3)
