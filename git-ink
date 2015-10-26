@@ -5,7 +5,7 @@
 semver="1.0.0"
 scriptname="$(basename "$0")"
 
-#yellow=$(tput setaf 3)
+yellow=$(tput setaf 3)
 #orange=$(tput setaf 9)
 red=$(tput setaf 1)
 magenta=$(tput setaf 5)
@@ -94,7 +94,21 @@ _output_branch_description() {
 }
 
 
+_output_line() {
+  local lsymbol=$1
+  local lslength=$2
+  local lbranch=$3
+  local ldate=$4
+
+  echo -n "${lsymbol} ${lbranch}${normal} $(printf ".%.0s" {1..60})" | head -c $((68 - lslength))
+  echo -n " ${ldate}"
+}
+
+
 _ink() {
+  # header
+  echo "${yellow}? BRANCH NAME $(printf " %.0s" {1..34}) LAST COMMIT"
+
   _get_branches | while read -r branchname branchdate; do
     if [ -n "$target_branchname" ] && [ "$target_branchname" != "$branchname" ]; then
       continue
@@ -105,7 +119,7 @@ _ink() {
     branch_color=$normal
     status_color=$normal
     status_symbol="•"
-    padding_symbol_length=0
+    symbol_length=0
 
     if [ "$branchname" == "$(_current_branchname)" ]; then
       branch_color=$magenta
@@ -113,7 +127,7 @@ _ink() {
       branch_commit="$(git rev-parse "$branchname")"
 
       # fix utf-8 symbol length for padding
-      padding_symbol_length=2
+      symbol_length=2
       if [ "$current_commit" == "$branch_commit" ]; then
         status_symbol="✓"
         status_color=$green
@@ -123,17 +137,18 @@ _ink() {
       fi
     fi
 
+    output_symbol="${status_color}${status_symbol}"
+    output_branchname="${branch_color}${branchname}"
+
+    _output_line \
+      "$output_symbol" \
+      "$symbol_length" \
+      "$output_branchname" \
+      "$branchdate"
+
     #@TODO support --no-color
     #@TODO support --format=config for standard _gitconfig output
     #@TODO support --one-line
-    output_branchname="${status_color}${status_symbol} ${branch_color}${branchname}"
-    output_padding=$(printf '%0.1s' "."{1..60})
-    output_padding_length=$((78 - padding_symbol_length))
-    printf "%s ${normal}"    "${output_branchname}"
-    printf "%*.*s ${normal}" \
-      0 $((output_padding_length - ${#output_branchname} - ${#branchdate} )) \
-      "${output_padding}"
-    printf "%s${normal}"  "${branchdate}"
 
     if [ -n "$tags" ]; then
       printf " - %s" "${tags}"
