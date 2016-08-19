@@ -10,7 +10,8 @@ view your branches, with annotations; hashtag branches for easier management.
 - OSX - Partial
     - the `git ink` command works but options do not (pending a getopts rewrite)
         - Use `git branch --edit-description` to add descriptions in the interim
--* Linux - Full
+
+- Linux - Full
     - `git ink` and all its flags work.
 
 ## Install
@@ -20,7 +21,7 @@ Put `git-ink` somewhere in your path.
 ## Usage
 
 ```shell
-git branch --edit-description     # opens EDITOR to edit a description
+git branch --edit-description     # opens $EDITOR to edit a description
 git ink                           # pretty list of branches and descriptions
 git ink -h                        # help
 git ink -b dev -g                 # display description of "dev" branch
