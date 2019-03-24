@@ -2,7 +2,7 @@
 
 # git-ink
 
-semver="1.0.2"
+semver="1.0.3"
 scriptname="$(basename "$0")"
 
 yellow=$(tput setaf 3)
@@ -218,6 +218,7 @@ _main() {
       ;;
 
     *)
+      echo "ERROR: Unrecognized flag -$OPTARG" >&2
       _version
       _help
       exit 1
