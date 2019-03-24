@@ -29,20 +29,24 @@ git ink -b dev -s "prepend me to existing description"
 git ink -b dev -r "overwrite entire description with this"
 ```
 
-A `.gitbranch` file will be used as the canonical source of meta data for this
-plugin if one is provided. It is in the same format as gitconfig files.
+A `.gitbranch` file will is the canonical source of meta data for this plugin
+if provided. The `.gitbranch` file uses the same format as gitconfig files.
 It MUST be added to `.gitignore` so it can exist in all branches (otherwise
 you would not have all the meta for all branches)
 
 ## TODO
 
 - sync with the branch info and descriptions stored in `.git/config`.
-- find a good way to keep the .gitbranch file distributed across multiple repo,
-  but available to all branches
+- find a good way to share the .gitbranch across repos and branches
 - rewrite in Ruby or Python for better compatibility
 - tests
 
 ## Changelog
+
+- 2019-03-24
+    - Release v1.0.3
+    - check if user is in a rebase or merge and abort
+    - print error message on unrecognized flag
 
 - 2015-10-26
     - Release v1.0.1
