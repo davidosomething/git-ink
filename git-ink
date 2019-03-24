@@ -2,7 +2,7 @@
 
 # git-ink
 
-semver="1.0.1"
+semver="1.0.2"
 scriptname="$(basename "$0")"
 
 yellow=$(tput setaf 3)
@@ -14,18 +14,15 @@ magenta=$(tput setaf 5)
 green=$(tput setaf 2)
 normal=$(tput sgr0)
 
-
 _current_branchname() {
   git symbolic-ref --short HEAD
 }
-
 
 _get_branches() {
   git for-each-ref \
     --format="%(refname:short) %(committerdate:short)" \
     refs/heads
 }
-
 
 _sync_meta() {
   #@TODO
@@ -35,7 +32,6 @@ _sync_meta() {
   # write to .gitbranch
   exit
 }
-
 
 _gitconfig() {
   local ink_metafile=""
@@ -48,18 +44,15 @@ _gitconfig() {
   fi
 }
 
-
 _has_gitbranch() {
   [ -f ".gitbranch" ]
 }
 
-
 _replace_description() {
   local new_description
-  new_description="$( printf "%b" "${2}\r\n" )"
+  new_description="$(printf "%b" "${2}\r\n")"
   _gitconfig "branch.${1}.description" "${new_description}"
 }
-
 
 # @param branchname
 # @param new description
@@ -67,16 +60,14 @@ _set_description() {
   local old_description
   local new_description
   old_description="$(_get_description "${1}")"
-  new_description="$( printf '%b' "${2}\r\n\n${old_description}" )"
+  new_description="$(printf '%b' "${2}\r\n\n${old_description}")"
   _gitconfig "branch.${1}.description" "${new_description}"
 }
-
 
 # @param branchname to get unformatted description of
 _get_description() {
   _gitconfig --get "branch.${1}.description"
 }
-
 
 # output indented branch description
 # with literal newlines (otherwise will diplay all on one line)
@@ -93,7 +84,6 @@ _output_branch_description() {
   IFS="${original_IFS}"
 }
 
-
 _output_line() {
   local lsymbol=$1
   local lslength=$2
@@ -103,7 +93,6 @@ _output_line() {
   echo -n "${lsymbol} ${lbranch}${normal} $(printf ".%.0s" {1..60})" | head -c $((68 - lslength))
   echo -n " ${ldate}"
 }
-
 
 _ink() {
   # header
@@ -161,11 +150,9 @@ _ink() {
   done
 }
 
-
 _version() {
   echo "$scriptname $semver"
 }
-
 
 _help() {
   echo
@@ -181,8 +168,13 @@ _help() {
   echo "-v                -- version info"
 }
 
-
 _main() {
+  if [[ -d "$(git rev-parse --git-path rebase-merge)" ]] ||
+    [[ -d "$(git rev-parse --git-path rebase-apply)" ]]; then
+    echo "ERROR: Rebase or merge in progress" >&2
+    exit 1
+  fi
+
   local action
   local target_branchname
   local new_description
@@ -190,34 +182,46 @@ _main() {
   while getopts ":b:r:s:vgh" opt; do
     case "$opt" in
 
-      b) # set target branchname
-        target_branchname="$OPTARG"
-        ;;
+    b) # set target branchname
+      target_branchname="$OPTARG"
+      ;;
 
-      g) # output branch description
-        action="get_description"
-        ;;
+    g) # output branch description
+      action="get_description"
+      ;;
 
-      r) # replace branch description
-        action="replace_description"
-        new_description="$OPTARG"
-        ;;
+    r) # replace branch description
+      action="replace_description"
+      new_description="$OPTARG"
+      ;;
 
-      s) # set branch description
-        action="set_description"
-        new_description="$OPTARG"
-        ;;
+    s) # set branch description
+      action="set_description"
+      new_description="$OPTARG"
+      ;;
 
-      h) _version; _help; exit ;;
+    h)
+      _version
+      _help
+      exit
+      ;;
 
-      v) _version; exit ;;
+    v)
+      _version
+      exit
+      ;;
 
-      :) # missing args on any flag
-        echo "ERROR: Option -$OPTARG requires an argument." >&2
-        _help
-        exit 1
-        ;;
+    :) # missing args on any flag
+      echo "ERROR: Option -$OPTARG requires an argument." >&2
+      _help
+      exit 1
+      ;;
 
+    *)
+      _version
+      _help
+      exit 1
+      ;;
     esac
   done
 
@@ -239,6 +243,5 @@ _main() {
   # default action
   _ink
 }
-
 
 _main "$@"
